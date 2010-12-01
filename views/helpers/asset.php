@@ -313,12 +313,6 @@ class AssetHelper extends Helper {
       $file->write(trim($scriptBuffer));
     }
 
-    if ($type == 'css') {
-      //$html->css doesn't check if the file already has
-      //the .css extension and adds it automatically, so we need to remove it.
-      $fileName = str_replace('.css', '', $fileName);
-    }
-
     return $fileName;
   }
 

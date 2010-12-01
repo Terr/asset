@@ -18,11 +18,11 @@ class AssetHelper extends Helper {
 		//Cake debug > 0, $this->options['md5FileName']options['debug'] = false    essentially turns the helper off.  js/css not packed.  Good for debugging your js/css files.
 		//Cake debug > 0, $this->options['md5FileName']options['debug'] = true     packed js/css returned.  Good for debugging this helper.
 		'debug' => false,
-		
+
 		//there is a *minimal* perfomance hit associated with looking up the filemtimes
-		//if you clean out your cached dir (as set below) on builds then you don't need this.		
+		//if you clean out your cached dir (as set below) on builds then you don't need this.
 		'checkTs' => false,
-		
+
 		//the packed files are named by stringing together all the individual file names
 		//this can generate really long names, so by setting this option to true
 		//the long name is md5'd, producing a resonable length file name.
@@ -30,18 +30,21 @@ class AssetHelper extends Helper {
 
 		//Additional paths for searching for css/js
 		'searchPaths' => array(),
-		
+
 		//Paths for storing the compressed files, relative to your webroot
 		'cachePaths' => array('css' => 'ccss', 'js' => 'cjs'),
-		
+
+		// Base location to prepend the file URLs. Can be relative to app/webroot or an absolute URL
+		'baseUrl'	=> '/',
+
 		//options: default, low_compression, high_compression, highest_compression
-		//I like high_compression because it still leaves the file readable.		
+		//I like high_compression because it still leaves the file readable.
 		'cssCompression' => 'high_compression',
-		
+
 		//replace relative img paths in css files with full http://...
 		'fixCssImg' => false
 	);
-	
+
   //Class for localizing JS files if JS I18N plugin is installed
   //http://github.com/mcurry/js/tree/master
   var $Lang = false;
@@ -56,7 +59,7 @@ class AssetHelper extends Helper {
   var $viewScriptCount = 0;
   var $initialized = false;
   var $js = array();
-	
+
   var $css = array();
 	var $assets = array();
 
@@ -84,7 +87,7 @@ class AssetHelper extends Helper {
     if (!$this->initialized) {
       $this->__init();
     }
-		
+
     if (Configure::read('debug') && $this->options['debug'] == false) {
       return join("\n\t", $this->View->__scripts);
     }
@@ -94,16 +97,16 @@ class AssetHelper extends Helper {
 			if(!in_array($asset['type'], $types) ) {
 				continue;
 			}
-			
+
 			switch($asset['type']) {
 				case 'js':
 					$processed = $this->__process($asset['type'], $asset['assets']);
-					$scripts_for_layout[] = $this->Javascript->link('/' . $this->options['cachePaths']['js'] . '/' . $processed);
+					$scripts_for_layout[] = $this->Javascript->link($this->options['baseUrl'] . $this->options['cachePaths']['js'] . '/' . $processed);
 					break;
 				case 'css':
 					$processed = $this->__process($asset['type'], $asset['assets']);
-					$scripts_for_layout[] = $this->Html->css('/' . $this->options['cachePaths']['css'] . '/' . $processed);
-					break;				
+					$scripts_for_layout[] = $this->Html->css($this->options['baseUrl'] . $this->options['cachePaths']['css'] . '/' . $processed);
+					break;
 				default:
 					$scripts_for_layout[] = $asset['assets']['script'];
 			}
@@ -129,7 +132,7 @@ class AssetHelper extends Helper {
 		if (Configure::read('debug') && $this->options['debug'] == false) {
 			return;
 		}
-		
+
     if (App::import('Model', 'Js.JsLang')) {
       $this->Lang = ClassRegistry::init('Js.JsLang');
       $this->Lang->init();
@@ -144,13 +147,13 @@ class AssetHelper extends Helper {
         $temp = array();
         $temp['script'] = $match[4];
         $temp['plugin'] = trim($match[2], '/');
-				
+
 				if($prev != $match[5] && !empty($holding)) {
 					$this->assets[$slot] = array('type' => $prev, 'assets' => $holding);
 					$holding = array();
 					$slot ++;
 				}
-       
+
 				$holding[] = $temp;
 				$prev = $match[5];
       } else {
@@ -159,13 +162,13 @@ class AssetHelper extends Helper {
 					$holding = array();
 					$slot ++;
 				}
-				
+
 				$this->assets[$slot] = array('type' => 'codeblock' , 'assets' => array('script' => $script));
 				$slot ++;
 				$prev = 'codeblock';
 			}
     }
-		
+
 		if(!empty($holding)) {
 			$this->assets[$slot] = array('type' => $prev, 'assets' => $holding);
 		}
@@ -290,7 +293,7 @@ class AssetHelper extends Helper {
 						if($this->options['fixCssImg']) {
 							$buffer = $this->__preprocessCss($asset, $buffer);
 						}
-						
+
             $tidy->parse($buffer);
             $buffer = $tidy->print->plain();
             break;
@@ -348,8 +351,8 @@ class AssetHelper extends Helper {
 
     $paths = array($this->__getPath($type));
 		$paths = array_merge($paths, $this->options['searchPaths']);
-		
-    
+
+
     if (!empty($asset['plugin']) > 0) {
       $pluginPaths = App::path('plugins');
       $count = count($pluginPaths);
@@ -378,7 +381,7 @@ class AssetHelper extends Helper {
         $assetFile = $this->Lang->paths['source'] . $script;
       }
     }
-      
+
     $this->foundFiles[$key] = $assetFile;
     return $assetFile;
   }
